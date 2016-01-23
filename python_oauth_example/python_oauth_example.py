@@ -95,7 +95,7 @@ def main():
 	if args.new_token:
 		get_token()
 	if args.refresh_token:
-		refresh
+		refresh()
 
 if __name__ == '__main__':
 	main()
