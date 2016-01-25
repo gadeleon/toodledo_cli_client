@@ -48,7 +48,7 @@ print 'Total Tasks: ', response_data[0]['total']
 for i in range(len(response_data)):
 	if 'completed' in response_data[i]:
 		if response_data[i]['completed'] == 0:
-			print 'incomplete Task: {}'.format(response_data[i]['title'])
+			print 'Incomplete Task: {}'.format(response_data[i]['title'])
 		else:
 			comp_date = completion_date(response_data[i]['completed'])
 			print 'Completed Task : {}, Completed {}'.format(response_data[i]['title'], comp_date)
