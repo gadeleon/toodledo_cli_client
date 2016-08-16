@@ -91,7 +91,7 @@ class ToodleDoAuthCLI(object):
             'client_id':self.client_id,
             'state':state,
             'playground':'0',
-            'email':raw_input('Email: ')
+            'email':raw_input('Email: '),
             'pass':getpass('Pass: '),
             'authorized':'Sign In'
         }
