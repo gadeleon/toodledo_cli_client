@@ -28,12 +28,12 @@ class ToodleDoAuthCLI(object):
     Class to interact with Toodledo authorization/token creation.
     '''
     def __init__(self):
-        #self.token = token
         self.account_url = 'https://api.toodledo.com/3/account/get.php?access_token={}'
         self.tasks_url = 'https://api.toodledo.com/3/tasks/get.php?access_token={}'
         self.authorization_base_url = 'https://api.toodledo.com/3/account/authorize.php'
         self.token_url = 'https://api.toodledo.com/3/account/token.php'
         self.code_url = '/3/account/authorize.php?response_type=code&client_id={}&scope={}&state={}'
+        self._load_app_details('app_details.pkl')
 
     def _load_app_details(self, app_details_pickle):
         '''
@@ -43,16 +43,12 @@ class ToodleDoAuthCLI(object):
         self.client_id = app['client_id']
         self.client_secret = app['client_secret']
         self.redirect_uri = app['redirect_uri']
-#        return self.client_id, self.client_secret, self.redirect_uri
 
     def _auth_client(self):
         '''
         Take a pickled dict with app details and create an auth. 
         Pickled hash must be done manually.
         '''
-        # app_details = self._load_app_details(app_details_pickle)
-        # client_id = app_details[0]
-        # client_secret = app_details[1]
         client_auth = requests.auth.HTTPBasicAuth(self.client_id, 
             self.client_secret)
         return client_auth
@@ -174,7 +170,6 @@ class ToodleDoCLI():
         '''
         Takes output of sync_tasks and converts into a json 
         '''
-        #data = pickle.load( open(tasks, 'rb'))
         return json.loads(tasks)
 
     def _print_all_tasks(self):
@@ -195,11 +190,9 @@ def main():
     args = parser.parse_args()
     if args.new_token:
         toodle = ToodleDoAuthCLI()
-        toodle._load_app_details('app_details.pkl')
         toodle.get_token()
     if args.refresh_token:
         toodle = ToodleDoAuthCLI()
-        toodle._load_app_details('app_details.pkl')
         toodle.refresh()
     toodle = ToodleDoCLI('auth_token.pkl')
     a = toodle.sync_tasks()
