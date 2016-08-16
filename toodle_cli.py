@@ -168,13 +168,13 @@ class ToodleDoCLI():
         '''
         get_tasks = requests.get('{}{}'.format(self.account_url, self.token))
         pickle.dump(get_tasks.text, open('tasks_queried.pkl', 'wb'))
-        return pickle.load(open('tasks_queried.pkl', rb))
+        return pickle.load(open('tasks_queried.pkl', 'rb'))
 
     def _parse_to_json(self, task_pickle):
         '''
         Takes output of sync_tasks and converts into a json 
         '''
-        data = pickle.load( open(task_text, 'rb'))
+        data = pickle.load( open(task_pickle, 'rb'))
         return json.loads(data)
 
     def _print_all_tasks(self):
