@@ -14,18 +14,19 @@ And GitHub's examples
 '''
 
 from requests_oauthlib import OAuth2Session
-import requests
+import requests 
 import requests.auth
 
 import argparse
 import pickle
 
 # Get your program's details from Toodledo's page
+app = pickle.load( open('app_details.pkl', 'rb'))
 
-client_id = 'CHANGEME'
-client_secret = 'CHANGEME'
+client_id = app['client_id']
+client_secret = app['client_secret']
 authorization_base_url = 'https://api.toodledo.com/3/account/authorize.php'
-redirect_uri = 'CHANGEME'
+redirect_uri = app['redirect_uri']
 token_url = 'https://api.toodledo.com/3/account/token.php'
 scope = ['basic','tasks', 'write']
 
@@ -87,9 +88,9 @@ def refresh():
 
 def main():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--new-token', action='store_true',
+	parser.add_argument('-n', '--new-token', action='store_true',
 		help='Authorize a new app and generate a new oauth_token')
-	parser.add_argument('--refresh-token', action='store_true',
+	parser.add_argument('-r', '--refresh-token', action='store_true',
 		help='Refresh the current auth_token.pkl file')
 	args = parser.parse_args()
 	if args.new_token:
