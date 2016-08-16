@@ -154,6 +154,7 @@ class ToodleDoCLI():
         self.context_url = 'https://api.toodledo.com/3/contexts/get.php?access_token='
         self.folders_url = 'http://api.toodledo.com/3/folders/get.php?access_token='
         self.goals_url = 'http://api.toodledo.com/3/goals/get.php?access_token='
+        self.locations_url ='http://api.toodledo.com/3/locations/get.php?access_token='
 
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
