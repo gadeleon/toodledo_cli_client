@@ -151,38 +151,49 @@ class ToodleDoCLI():
         self.token = self.token['access_token']
         self.account_url = 'https://api.toodledo.com/3/account/get.php?access_token='
         self.tasks_get_url = 'https://api.toodledo.com/3/tasks/get.php?access_token='
-        self.json_tasks = self._parse_to_json(self.sync_tasks())
-        print self.json_tasks
 
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
         return self.token
 
-    def sync_tasks(self):
+    def sync_tasks(self, fields=[]):
         '''
         Performs a synchronization with ToodleDo and dumps out tasks to a pickle
         '''
-        get_tasks = requests.get('{}{}'.format(self.tasks_get_url, self.token))
-        pickle.dump(get_tasks.text, open('tasks_queried.pkl', 'wb'))
+        fields = ','.join(fields)
+        print fields
+        if fields:
+            request_url = '{}{}&fields={}'.format(self.tasks_get_url,
+                self.token, fields)
+        else:
+            request_url = '{}{}'.format(self.tasks_get_url, self.token)
+        print request_url
+        get_tasks = requests.get(request_url)
+        self.json_tasks = self._parse_to_json(get_tasks.text)
+        pickle.dump(self.json_tasks, open('tasks_queried.pkl', 'wb'))
         return pickle.load(open('tasks_queried.pkl', 'rb'))
 
     def _parse_to_json(self, tasks):
         '''
         Takes output of sync_tasks and converts into a json 
         '''
-        return json.loads(tasks)
+        self.json_tasks = json.loads(tasks)
+        return self.json_tasks
 
     def _print_all_tasks(self):
         '''
         Prints out all tasks in a for loop 
         '''
-        for i in range(len(self.json_tasks)):
-            print self.json_tasks[i]
+        #for i in range(len(self.json_tasks)):
+        #   pprint(self.json_tasks[i])
 
+        pprint(self.json_tasks)
 
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--fields', nargs='*', help='Specify what fields '
+                        'you wish to include')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
@@ -195,7 +206,7 @@ def main():
         toodle = ToodleDoAuthCLI()
         toodle.refresh()
     toodle = ToodleDoCLI('auth_token.pkl')
-    a = toodle.sync_tasks()
+    a = toodle.sync_tasks(args.fields)
     toodle._print_all_tasks()
 if __name__ == '__main__':
     main()
