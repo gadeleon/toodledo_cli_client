@@ -223,6 +223,20 @@ class ToodleDoCLI():
         #   pprint(self.json_tasks[i])
         pprint(self.json_tasks)
 
+    def _align_hash_to_task(self, udl, udl_id):
+        '''
+        Replaces user defined list id to the appropriate hash
+        '''
+        pass
+
+    def display_task(self):
+        '''
+        Presents a task in human readable format
+        Aligns user defined lists ids to the name
+        '''
+        pass
+
+
 
 
 
