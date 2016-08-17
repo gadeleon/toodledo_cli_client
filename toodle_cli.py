@@ -193,16 +193,15 @@ class ToodleDoCLI():
         '''
         Performs a synchronization with ToodleDo and dumps out tasks to a pickle
         '''
-        # Get user defined lists
-        self._get_user_defined_lists(fields)
-        fields = ','.join(fields)
-        print fields
-        if fields:
+        # Parse and use the fields attribute if it's being used.
+        try:
+            self._get_user_defined_lists(fields)
+            fields = ','.join(fields)
             request_url = '{}{}&fields={}'.format(self.tasks_get_url,
                 self.token, fields)
-        else:
+        except TypeError:
             request_url = '{}{}'.format(self.tasks_get_url, self.token)
-        print request_url
+        print '{}\n{}'.format(fields, request_url)
         get_tasks = requests.get(request_url)
         self.json_tasks = self._parse_to_json(get_tasks.text)
         pickle.dump(self.json_tasks, open('tasks_queried.pkl', 'wb'))
@@ -222,7 +221,6 @@ class ToodleDoCLI():
         '''
         #for i in range(len(self.json_tasks)):
         #   pprint(self.json_tasks[i])
-
         pprint(self.json_tasks)
 
 
@@ -240,12 +238,25 @@ def main():
     if args.new_token:
         toodle = ToodleDoAuthCLI()
         toodle.get_token()
+        raise SystemExit
     if args.refresh_token:
         toodle = ToodleDoAuthCLI()
         toodle.refresh()
+        raise SystemExit
     toodle = ToodleDoCLI('auth_token.pkl')
-    a = toodle.sync_tasks(args.fields)
-    toodle._print_all_tasks()
-    print toodle.context_hash,'\n', toodle.goal_hash
+    try:
+        a = toodle.sync_tasks(args.fields)
+        toodle._print_all_tasks()
+        print toodle.context_hash,'\n', toodle.goal_hash
+    except requests.exceptions.SSLError:
+        # An SSL Error will occur if the token needs to refreshed. 
+        # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
+        toodle = ToodleDoAuthCLI()
+        toodle.refresh()
+    except AttributeError:
+        pass
+    except requests.exceptions.ConnectionError:
+        print 'Cannot connect to api.toodledo.com. Exiting...'
+        raise SystemExit
 if __name__ == '__main__':
     main()
