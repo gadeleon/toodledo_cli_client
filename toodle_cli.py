@@ -155,10 +155,37 @@ class ToodleDoCLI():
         self.folder_url = 'http://api.toodledo.com/3/folders/get.php?access_token='
         self.goal_url = 'http://api.toodledo.com/3/goals/get.php?access_token='
         self.location_url ='http://api.toodledo.com/3/locations/get.php?access_token='
+        self.user_defined_hash_url = {
+                                    'context' : self.context_url,
+                                    'folder' : self.folder_url,
+                                    'goal' : self.goal_url,
+                                    'location' : self.location_url
+                                    }
+        self.user_defined_lists = {}
+        self.valid_fields = ['folder', 'context', 'goal', 'location', 'tag', 
+                            'startdate', 'duedate', 'duedatemod', 'starttime', 
+                            'duetime', 'remind', 'repeat', 'status', 'star', 
+                            'priority', 'length', 'timer', 'added', 'note', 
+                            'parent', 'children', 'order', 'meta', 'previous', 
+                            'attachment', 'shared', 'addedby', 'via', 
+                            'attachments']
 
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
         return self.token
+
+    def _is_valid_field_list(self, fields):
+        '''
+        Exits if user puts in field that doesn't exist. 
+        Reference: http://api.toodledo.com/3/tasks/index.php
+        '''
+        for i in fields:
+            if i not in self.valid_fields:
+                print '"{}"" is not a valid field. Check for spelling or '\
+                'accidental pluralization.'.format(i)
+                return False
+        return True
+
 
     def _get_user_defined_lists(self, udls):
         '''
@@ -166,27 +193,12 @@ class ToodleDoCLI():
 
         NOTE: The lists are essentially hashes in [{'name':'id'}] format.
         '''
-        #valid = ['folders', 'contexts', 'goals', 'locations', 'folder',
-        #        'context', 'goal', 'location']
         for i in udls:
-            if i.lower() == 'context' or i.lower() == 'contexts':
-                self.context_hash = requests.get('{}{}'.format(self.context_url,
-                    self.token))
-                self.context_hash = self.context_hash.text
-            elif i.lower() == 'goal' or i.lower() == 'goals':
-                self.goal_hash = requests.get('{}{}'.format(self.goal_url,
-                    self.token))
-                self.goal_hash = self.goal_hash.text
-            elif i.lower() == 'folder' or i.lower() == 'folders':
-                self.folder_hash = requests.get('{}{}'.format(self.folder_url,
-                    self.token))
-                self.folder_hash = self.folder_hash.text
-            elif i.lower() == 'location' or i.lower() == 'locations':
-                self.location_hash = requests.get('{}{}'.format(self.locations_url,
-                    self.token))
-                self.location_hash = self.locations_hash.text
-
-
+            i = i.lower()
+            if i in self.user_defined_hash_url:
+                self.user_defined_lists[i] = requests.get('{}{}'\
+                    .format(self.user_defined_hash_url[i], self.token))
+                self.user_defined_lists[i] = json.loads(self.user_defined_lists[i].text)
 
 
     def sync_tasks(self, fields=[]):
@@ -195,13 +207,14 @@ class ToodleDoCLI():
         '''
         # Parse and use the fields attribute if it's being used.
         try:
+            if not self._is_valid_field_list(fields):
+                raise SystemExit
             self._get_user_defined_lists(fields)
             fields = ','.join(fields)
             request_url = '{}{}&fields={}'.format(self.tasks_get_url,
                 self.token, fields)
         except TypeError:
             request_url = '{}{}'.format(self.tasks_get_url, self.token)
-        print '{}\n{}'.format(fields, request_url)
         get_tasks = requests.get(request_url)
         self.json_tasks = self._parse_to_json(get_tasks.text)
         pickle.dump(self.json_tasks, open('tasks_queried.pkl', 'wb'))
@@ -261,7 +274,11 @@ def main():
     try:
         a = toodle.sync_tasks(args.fields)
         toodle._print_all_tasks()
-        print toodle.context_hash,'\n', toodle.goal_hash
+        for i in args.fields:
+            if i in toodle.user_defined_hash_url:
+                print toodle.user_defined_lists[i]
+    except TypeError:
+        pass    
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
