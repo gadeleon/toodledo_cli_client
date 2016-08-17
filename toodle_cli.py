@@ -152,18 +152,49 @@ class ToodleDoCLI():
         self.account_url = 'https://api.toodledo.com/3/account/get.php?access_token='
         self.tasks_get_url = 'https://api.toodledo.com/3/tasks/get.php?access_token='
         self.context_url = 'https://api.toodledo.com/3/contexts/get.php?access_token='
-        self.folders_url = 'http://api.toodledo.com/3/folders/get.php?access_token='
-        self.goals_url = 'http://api.toodledo.com/3/goals/get.php?access_token='
-        self.locations_url ='http://api.toodledo.com/3/locations/get.php?access_token='
+        self.folder_url = 'http://api.toodledo.com/3/folders/get.php?access_token='
+        self.goal_url = 'http://api.toodledo.com/3/goals/get.php?access_token='
+        self.location_url ='http://api.toodledo.com/3/locations/get.php?access_token='
 
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
         return self.token
 
+    def _get_user_defined_lists(self, udls):
+        '''
+        Retrieves and stores the user defined lists requested from a task sync
+
+        NOTE: The lists are essentially hashes in [{'name':'id'}] format.
+        '''
+        #valid = ['folders', 'contexts', 'goals', 'locations', 'folder',
+        #        'context', 'goal', 'location']
+        for i in udls:
+            if i.lower() == 'context' or i.lower() == 'contexts':
+                self.context_hash = requests.get('{}{}'.format(self.context_url,
+                    self.token))
+                self.context_hash = self.context_hash.text
+            elif i.lower() == 'goal' or i.lower() == 'goals':
+                self.goal_hash = requests.get('{}{}'.format(self.goal_url,
+                    self.token))
+                self.goal_hash = self.goal_hash.text
+            elif i.lower() == 'folder' or i.lower() == 'folders':
+                self.folder_hash = requests.get('{}{}'.format(self.folder_url,
+                    self.token))
+                self.folder_hash = self.folder_hash.text
+            elif i.lower() == 'location' or i.lower() == 'locations':
+                self.location_hash = requests.get('{}{}'.format(self.locations_url,
+                    self.token))
+                self.location_hash = self.locations_hash.text
+
+
+
+
     def sync_tasks(self, fields=[]):
         '''
         Performs a synchronization with ToodleDo and dumps out tasks to a pickle
         '''
+        # Get user defined lists
+        self._get_user_defined_lists(fields)
         fields = ','.join(fields)
         print fields
         if fields:
@@ -175,6 +206,7 @@ class ToodleDoCLI():
         get_tasks = requests.get(request_url)
         self.json_tasks = self._parse_to_json(get_tasks.text)
         pickle.dump(self.json_tasks, open('tasks_queried.pkl', 'wb'))
+        # Get user defined lists
         return pickle.load(open('tasks_queried.pkl', 'rb'))
 
     def _parse_to_json(self, tasks):
@@ -192,6 +224,8 @@ class ToodleDoCLI():
         #   pprint(self.json_tasks[i])
 
         pprint(self.json_tasks)
+
+
 
 
 def main():
@@ -212,5 +246,6 @@ def main():
     toodle = ToodleDoCLI('auth_token.pkl')
     a = toodle.sync_tasks(args.fields)
     toodle._print_all_tasks()
+    print toodle.context_hash,'\n', toodle.goal_hash
 if __name__ == '__main__':
     main()
