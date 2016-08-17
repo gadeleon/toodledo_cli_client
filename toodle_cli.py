@@ -146,9 +146,7 @@ class ToodleDoCLI():
     Class to interact with Toodledo.
     '''
     def __init__(self, token):
-        self.token = token
-        self.token = self._load_token(token)
-        self.token = self.token['access_token']
+        self.token = self._load_token(token)['access_token']
         self.account_url = 'https://api.toodledo.com/3/account/get.php?access_token='
         self.tasks_get_url = 'https://api.toodledo.com/3/tasks/get.php?access_token='
         self.context_url = 'https://api.toodledo.com/3/contexts/get.php?access_token='
@@ -162,6 +160,8 @@ class ToodleDoCLI():
                                     'location' : self.location_url
                                     }
         self.user_defined_lists = {}
+        self.valid_params = ['before', 'after', 'comp', 'id', 'start', 'num',
+                            'fields']
         self.valid_fields = ['folder', 'context', 'goal', 'location', 'tag', 
                             'startdate', 'duedate', 'duedatemod', 'starttime', 
                             'duetime', 'remind', 'repeat', 'status', 'star', 
@@ -200,6 +200,19 @@ class ToodleDoCLI():
                     .format(self.user_defined_hash_url[i], self.token))
                 self.user_defined_lists[i] = json.loads(self.user_defined_lists[i].text)
 
+    def _form_task_request_url(self, **kwargs):
+        '''
+        Form a url with the task parameters opted in by the user
+        '''
+        request_url = '&'
+        for param in kwargs:
+            print param
+            if kwargs[param] and param in self.valid_params:
+                request_url = '{}{}={}'.format(request_url, param, 
+                    ','.join(kwargs[param]))
+                print request_url
+                #url = '&'.join('{}')
+        return request_url
 
     def sync_tasks(self, fields=[]):
         '''
@@ -257,11 +270,15 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fields', nargs='*', help='Specify what fields '
                         'you wish to include')
+    parser.add_argument('-s', '--start-day', dest='after', type=int, 
+                        metavar='INT',help='Go back N days and display tasks' 
+                        'modified *AFTER* this day')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
         help='Refresh the current auth_token.pkl file')
     args = parser.parse_args()
+    print vars(args)
     if args.new_token:
         toodle = ToodleDoAuthCLI()
         toodle.get_token()
@@ -272,12 +289,16 @@ def main():
         raise SystemExit
     toodle = ToodleDoCLI('auth_token.pkl')
     try:
+        url = toodle._form_task_request_url(**vars(args))
+        print url
         a = toodle.sync_tasks(args.fields)
-        toodle._print_all_tasks()
-        for i in args.fields:
-            if i in toodle.user_defined_hash_url:
-                print toodle.user_defined_lists[i]
-    except TypeError:
+        #toodle._print_all_tasks()
+        if args.fields:
+            for i in args.fields:
+                 if i in toodle.user_defined_hash_url:
+                    print toodle.user_defined_lists[i]
+    except TypeError as e:
+        print e
         pass    
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
