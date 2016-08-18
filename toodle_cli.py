@@ -6,7 +6,6 @@ Way to interact with toodledo in a class
 
 import sys
 import json
-import time
 import pickle
 import urllib2
 import argparse
@@ -199,6 +198,19 @@ class ToodleDoCLI():
                 self.user_defined_lists[i] = requests.get('{}{}'\
                     .format(self.user_defined_hash_url[i], self.token))
                 self.user_defined_lists[i] = json.loads(self.user_defined_lists[i].text)
+
+    def _form_after_GMT_unix_time(self, days):
+        '''
+        Get the unx time days ago
+        '''
+        now = datetime.datetime.now()
+        start = (now - datetime.timedelta(days=days)).strftime('%s')
+        return start
+
+    def _form_param_for_request_url(self, **kwargs):
+        '''
+        Forms the pamaters of the request url.
+        '''
 
     def _form_task_request_url(self, **kwargs):
         '''
