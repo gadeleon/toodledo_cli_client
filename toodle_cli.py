@@ -298,13 +298,25 @@ def main():
     parser.add_argument('-s', '--start-day', dest='after', type=int, 
                         metavar='N DAYS AGO', help='Go back N days and display '
                         'tasks modified *AFTER* this day')
-    parser.add_argument('-c', '--completed', dest='comp', action='store_true',
-                        const=1 , help='Only show completed tasks')
+    completion = parser.add_mutually_exclusive_group()
+    completion.add_argument('-c', '--completed', dest='comp', action='store_const',
+                        const='1' , help='Only show completed tasks')
+    completion.add_argument('-i', '--incomplete', dest='comp', action='store_const',
+                        const='0', help='Only show incomplete tasks')
+    parser.add_argument('-t', '--task-id', dest='id', help='Display a task with '
+                        'specified id number')
+    parser.add_argument('-m', '--max', type=int, dest='num', metavar='NUMBER '
+                        'OF RECORDS', help='Set a maximum number of records to '
+                        'display. Maximum allowed is 1000')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
         help='Refresh the current auth_token.pkl file')
     args = parser.parse_args()
+    if args.num > 1000:
+        print 'Maximum number of records toodledo can pull is 1000. {} '\
+                'requested\n'.format(args.num)
+        raise SystemExit
     print vars(args)
     if args.new_token:
         toodle = ToodleDoAuthCLI()
@@ -320,10 +332,10 @@ def main():
         print url
         a = toodle.sync_tasks(vars(args), args.fields)
         toodle._print_all_tasks()
-        if args.fields:
-            for i in args.fields:
-                 if i in toodle.user_defined_hash_url:
-                    print toodle.user_defined_lists[i]
+      #  if args.fields:
+       #     for i in args.fields:
+        #         if i in toodle.user_defined_hash_url:
+         #           print toodle.user_defined_lists[i]
     #except TypeError as e:
       #  print e
       #  pass    
