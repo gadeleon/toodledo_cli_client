@@ -204,7 +204,9 @@ class ToodleDoCLI():
         '''
         Form a url with the task parameters opted in by the user
         '''
-        request_url = '&'
+        request_url = ''
+        if not self._is_valid_field_list(kwargs['fields']):
+            raise SystemExit
         for param in kwargs:
             if kwargs[param] and param in self.valid_params:
                 try:
@@ -214,25 +216,19 @@ class ToodleDoCLI():
                     request_url = '{}{}={}'.format(request_url, param, 
                     kwargs[param])
                 request_url = '{}&'.format(request_url)
-                #url = '&'.join('{}')
         # Remove the trailing & and return
         request_url = request_url[0:-1]
+        request_url = '{}{}&{}'.format(self.tasks_get_url, self.token, 
+            request_url)
         return request_url
 
-    def sync_tasks(self, fields=[]):
+    def sync_tasks(self, param_hash, fields=[]):
         '''
         Performs a synchronization with ToodleDo and dumps out tasks to a pickle
         '''
         # Parse and use the fields attribute if it's being used.
-        try:
-            if not self._is_valid_field_list(fields):
-                raise SystemExit
-            self._get_user_defined_lists(fields)
-            fields = ','.join(fields)
-            request_url = '{}{}&fields={}'.format(self.tasks_get_url,
-                self.token, fields)
-        except TypeError:
-            request_url = '{}{}'.format(self.tasks_get_url, self.token)
+        self._get_user_defined_lists(fields)
+        request_url = self._form_task_request_url(**param_hash)
         get_tasks = requests.get(request_url)
         self.json_tasks = self._parse_to_json(get_tasks.text)
         pickle.dump(self.json_tasks, open('tasks_queried.pkl', 'wb'))
@@ -296,15 +292,15 @@ def main():
     try:
         url = toodle._form_task_request_url(**vars(args))
         print url
-        a = toodle.sync_tasks(args.fields)
+        a = toodle.sync_tasks(vars(args), args.fields)
         #toodle._print_all_tasks()
         if args.fields:
             for i in args.fields:
                  if i in toodle.user_defined_hash_url:
                     print toodle.user_defined_lists[i]
-    except TypeError as e:
-        print e
-        pass    
+    #except TypeError as e:
+      #  print e
+      #  pass    
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
