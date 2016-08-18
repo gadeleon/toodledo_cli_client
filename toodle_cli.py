@@ -206,12 +206,17 @@ class ToodleDoCLI():
         '''
         request_url = '&'
         for param in kwargs:
-            print param
             if kwargs[param] and param in self.valid_params:
-                request_url = '{}{}={}'.format(request_url, param, 
+                try:
+                    request_url = '{}{}={}'.format(request_url, param, 
                     ','.join(kwargs[param]))
-                print request_url
+                except TypeError:
+                    request_url = '{}{}={}'.format(request_url, param, 
+                    kwargs[param])
+                request_url = '{}&'.format(request_url)
                 #url = '&'.join('{}')
+        # Remove the trailing & and return
+        request_url = request_url[0:-1]
         return request_url
 
     def sync_tasks(self, fields=[]):
@@ -271,8 +276,8 @@ def main():
     parser.add_argument('-f', '--fields', nargs='*', help='Specify what fields '
                         'you wish to include')
     parser.add_argument('-s', '--start-day', dest='after', type=int, 
-                        metavar='INT',help='Go back N days and display tasks' 
-                        'modified *AFTER* this day')
+                        metavar='N DAYS AGO', help='Go back N days and display '
+                        'tasks modified *AFTER* this day')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
