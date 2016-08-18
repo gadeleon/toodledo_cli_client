@@ -168,6 +168,7 @@ class ToodleDoCLI():
                             'parent', 'children', 'order', 'meta', 'previous', 
                             'attachment', 'shared', 'addedby', 'via', 
                             'attachments']
+        self.time_params = ['after', 'before']
 
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
@@ -199,7 +200,7 @@ class ToodleDoCLI():
                     .format(self.user_defined_hash_url[i], self.token))
                 self.user_defined_lists[i] = json.loads(self.user_defined_lists[i].text)
 
-    def _form_after_GMT_unix_time(self, days):
+    def _form_GMT_unix_time(self, days):
         '''
         Get the unx time days ago
         '''
@@ -211,25 +212,33 @@ class ToodleDoCLI():
         '''
         Forms the pamaters of the request url.
         '''
+        request_params = '&'
+        for param in kwargs:
+            if kwargs[param] and param in self.valid_params:
+                try:
+                    request_params = '{}{}={}'.format(request_params, param, 
+                    ','.join(kwargs[param]))
+                except TypeError:
+                    if param in self.time_params:
+                        tym = self._form_GMT_unix_time(kwargs[param])
+                        request_params = '{}{}={}'.format(request_params, param,
+                            tym)
+                    else:
+                        request_params = '{}{}={}'.format(request_params, param, 
+                        kwargs[param])
+                request_params = '{}&'.format(request_params)
+        # Remove the trailing & and return
+        request_params = request_params[0:-1]
+        return request_params
 
     def _form_task_request_url(self, **kwargs):
         '''
         Form a url with the task parameters opted in by the user
         '''
-        request_url = ''
+       # request_url = ''
         if not self._is_valid_field_list(kwargs['fields']):
             raise SystemExit
-        for param in kwargs:
-            if kwargs[param] and param in self.valid_params:
-                try:
-                    request_url = '{}{}={}'.format(request_url, param, 
-                    ','.join(kwargs[param]))
-                except TypeError:
-                    request_url = '{}{}={}'.format(request_url, param, 
-                    kwargs[param])
-                request_url = '{}&'.format(request_url)
-        # Remove the trailing & and return
-        request_url = request_url[0:-1]
+        request_url = self._form_param_for_request_url(**kwargs)
         request_url = '{}{}&{}'.format(self.tasks_get_url, self.token, 
             request_url)
         return request_url
@@ -283,6 +292,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-f', '--fields', nargs='*', help='Specify what fields '
                         'you wish to include')
+    parser.add_argument('-e', '--end-day', dest='before', type=int,
+                        metavar='N DAYS AGO', help='Go back N days and display '
+                        'tasks modified *BEFORE* this day')
     parser.add_argument('-s', '--start-day', dest='after', type=int, 
                         metavar='N DAYS AGO', help='Go back N days and display '
                         'tasks modified *AFTER* this day')
@@ -305,7 +317,7 @@ def main():
         url = toodle._form_task_request_url(**vars(args))
         print url
         a = toodle.sync_tasks(vars(args), args.fields)
-        #toodle._print_all_tasks()
+        toodle._print_all_tasks()
         if args.fields:
             for i in args.fields:
                  if i in toodle.user_defined_hash_url:
