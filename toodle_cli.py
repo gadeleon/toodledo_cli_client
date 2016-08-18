@@ -317,7 +317,6 @@ def main():
         print 'Maximum number of records toodledo can pull is 1000. {} '\
                 'requested\n'.format(args.num)
         raise SystemExit
-    print vars(args)
     if args.new_token:
         toodle = ToodleDoAuthCLI()
         toodle.get_token()
@@ -328,8 +327,6 @@ def main():
         raise SystemExit
     toodle = ToodleDoCLI('auth_token.pkl')
     try:
-        url = toodle._form_task_request_url(**vars(args))
-        print url
         a = toodle.sync_tasks(vars(args), args.fields)
         toodle._print_all_tasks()
       #  if args.fields:
