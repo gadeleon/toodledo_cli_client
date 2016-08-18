@@ -170,6 +170,9 @@ class ToodleDoCLI():
                             'attachments']
         self.time_params = ['after', 'before']
 
+    def __str__(self):
+        print self.json_tasks
+
     def _load_token(self, token):
         self.token = pickle.load( open(token, 'rb'))
         return self.token
@@ -271,18 +274,31 @@ class ToodleDoCLI():
         #   pprint(self.json_tasks[i])
         pprint(self.json_tasks)
 
-    def _align_hash_to_task(self, udl, udl_id):
+    def _align_hash_to_task(self, task):#udl, udl_id):
         '''
         Replaces user defined list id to the appropriate hash
         '''
-        pass
+        if len(task) > 2:
+            #print task
+            for i in task:
+                if i in self.user_defined_lists:
+                    for n in self.user_defined_lists[i]:
+                        if task[i] ==  n['id']:
+                           # print i, task[i], n['name']
+                            task[i] = n['name']
+                            #print task
+        return task
 
-    def display_task(self):
+                    #print key, i[key], self.user_defined_lists[key][0]['id']
+
+
+    def display_task(self, task):
         '''
         Presents a task in human readable format
         Aligns user defined lists ids to the name
         '''
-        pass
+        task = self._align_hash_to_task(task)
+        pprint(task)
 
 
 
@@ -328,7 +344,10 @@ def main():
     toodle = ToodleDoCLI('auth_token.pkl')
     try:
         a = toodle.sync_tasks(vars(args), args.fields)
-        toodle._print_all_tasks()
+        #toodle._print_all_tasks()
+        for i in toodle.json_tasks:
+            toodle.display_task(i)
+            
       #  if args.fields:
        #     for i in args.fields:
         #         if i in toodle.user_defined_hash_url:
