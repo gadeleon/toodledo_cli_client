@@ -298,6 +298,8 @@ def main():
     parser.add_argument('-s', '--start-day', dest='after', type=int, 
                         metavar='N DAYS AGO', help='Go back N days and display '
                         'tasks modified *AFTER* this day')
+    parser.add_argument('-c', '--completed', dest='comp', action='store_true',
+                        const=1 , help='Only show completed tasks')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
