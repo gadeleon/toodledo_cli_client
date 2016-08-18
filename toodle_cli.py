@@ -347,14 +347,6 @@ def main():
         #toodle._print_all_tasks()
         for i in toodle.json_tasks:
             toodle.display_task(i)
-            
-      #  if args.fields:
-       #     for i in args.fields:
-        #         if i in toodle.user_defined_hash_url:
-         #           print toodle.user_defined_lists[i]
-    #except TypeError as e:
-      #  print e
-      #  pass    
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
