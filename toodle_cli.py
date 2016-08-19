@@ -310,24 +310,17 @@ class ToodleDoCLI():
         return out
 
 
-    def display_tasks_by_goal(self, task):
+    def display_tasks_by_goal(self):
         '''
         Presents a task in human readable format printed by goal
         '''
-        if len(task) < 3:
-            print 'Number of Tasks: {}'.format(task['num'])
-        else:
-            preprocess = self._group_by_goal()
-            for i in preprocess:
-                if i == 0:
-                    print '{}'.format('Misc/No Goals')
-                    for n in preprocess[i]:
-                        print '{}, Completed {}'.format(n, preprocess[i][n])
-                else:
-                    print '{} Related Work:'.format(i)
-                    for n in preprocess[i]:
-                        tym = time.strftime('%Y-%m-%d',time.localtime(int(preprocess[i][n])))
-                        print '    {}, Completed {}'.format(n, tym)
+        print 'Number of Tasks: {}'.format(self.json_tasks[0]['num'])
+        preprocess = self._group_by_goal()
+        for n in preprocess:
+            print '{} Related Work:'.format(n)
+            for x in preprocess[n]:
+                tym = time.strftime('%Y-%m-%d',time.localtime(int(preprocess[n][x])))
+                print '    {}, Completed {}'.format(x, tym)
 
 
 '''
@@ -383,7 +376,7 @@ def main():
     try:
         a = toodle.sync_tasks(vars(args), args.fields)
         #toodle.dump_all_tasks()
-        toodle.display_tasks_by_goal(toodle.json_tasks)
+        toodle.display_tasks_by_goal()
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
