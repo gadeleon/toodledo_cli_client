@@ -6,6 +6,7 @@ Way to interact with toodledo in a class
 
 import sys
 import json
+import time
 import pickle
 import urllib2
 import argparse
@@ -266,12 +267,10 @@ class ToodleDoCLI():
         self.json_tasks = json.loads(tasks)
         return self.json_tasks
 
-    def _print_all_tasks(self):
+    def dump_all_tasks(self):
         '''
-        Prints out all tasks in a for loop 
+        Dumps contents of all tasks  
         '''
-        #for i in range(len(self.json_tasks)):
-        #   pprint(self.json_tasks[i])
         pprint(self.json_tasks)
 
     def _align_hash_to_task(self, task):#udl, udl_id):
@@ -284,22 +283,61 @@ class ToodleDoCLI():
                 if i in self.user_defined_lists:
                     for n in self.user_defined_lists[i]:
                         if task[i] ==  n['id']:
-                           # print i, task[i], n['name']
+                            #print i, task[i], n['name']
                             task[i] = n['name']
-                            #print task
+                        elif task[i] == 0:
+                            task[i] = 'Misc/Uncategorized'
         return task
 
                     #print key, i[key], self.user_defined_lists[key][0]['id']
 
-
-    def display_task(self, task):
+    def _group_by_goal(self, out={}):
         '''
-        Presents a task in human readable format
-        Aligns user defined lists ids to the name
+        Creates a hash for tasks to get displayed by goal. 
         '''
-        task = self._align_hash_to_task(task)
-        pprint(task)
+        for i in self.json_tasks:
+            for n in i:
+                if n == 'goal':
+                    goal_name = str(self._align_hash_to_task(i)['goal'])
+                    if goal_name not in out:
+                        out[goal_name] = {}
+                        #print out
+                        if str(i['title']) not in out[goal_name]:
+                            out[goal_name][str(i['title'])] = str(i['completed'])
+    #                        out[goal_name].append([tasks['title'], tasks['completed']])
+                    elif goal_name in out and str(i['title']) not in out[goal_name]:
+                        out[goal_name][str(i['title'])] = str(i['completed'])
+        return out
 
+
+    def display_tasks_by_goal(self, task):
+        '''
+        Presents a task in human readable format printed by goal
+        '''
+        if len(task) < 3:
+            print 'Number of Tasks: {}'.format(task['num'])
+        else:
+            preprocess = self._group_by_goal()
+            for i in preprocess:
+                if i == 0:
+                    print '{}'.format('Misc/No Goals')
+                    for n in preprocess[i]:
+                        print '{}, Completed {}'.format(n, preprocess[i][n])
+                else:
+                    print '{} Related Work:'.format(i)
+                    for n in preprocess[i]:
+                        tym = time.strftime('%Y-%m-%d',time.localtime(int(preprocess[i][n])))
+                        print '    {}, Completed {}'.format(n, tym)
+
+
+'''
+{goal} Related Work
+'''
+'''
+
+({context}) {title}, Completed {completion}
+
+'''
 
 
 
@@ -319,8 +357,8 @@ def main():
                         const='1' , help='Only show completed tasks')
     completion.add_argument('-i', '--incomplete', dest='comp', action='store_const',
                         const='0', help='Only show incomplete tasks')
-    parser.add_argument('-t', '--task-id', dest='id', help='Display a task with '
-                        'specified id number')
+    parser.add_argument('-t', '--task-id', nargs=1, dest='id', 
+                        help='Display a task with specified id number')
     parser.add_argument('-m', '--max', type=int, dest='num', metavar='NUMBER '
                         'OF RECORDS', help='Set a maximum number of records to '
                         'display. Maximum allowed is 1000')
@@ -344,9 +382,8 @@ def main():
     toodle = ToodleDoCLI('auth_token.pkl')
     try:
         a = toodle.sync_tasks(vars(args), args.fields)
-        #toodle._print_all_tasks()
-        for i in toodle.json_tasks:
-            toodle.display_task(i)
+        #toodle.dump_all_tasks()
+        toodle.display_tasks_by_goal(toodle.json_tasks)
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
