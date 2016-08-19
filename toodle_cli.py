@@ -291,11 +291,31 @@ class ToodleDoCLI():
 
                     #print key, i[key], self.user_defined_lists[key][0]['id']
 
-    def _group_by_goal(self, out={}):
+    def _apply_filter(self, tag_filter=''):
+        '''
+        Gives you the self.json_tasks that match the specified filters
+        '''
+        out = []
+        if tag_filter:
+            for i in self.json_tasks:
+                if len(i) > 2:
+                    for n in i:
+                        if tag_filter in i['tag']:
+                            out.append(i)
+            return out
+        else:
+            for i in self.json_tasks:
+                if len(i) > 2:
+                    out.append(i)
+            return out 
+
+
+    def _group_by_goal(self, tag_filter='', out={}):
         '''
         Creates a hash for tasks to get displayed by goal. 
         '''
-        for i in self.json_tasks:
+        filtered = self._apply_filter(tag_filter=tag_filter)
+        for i in filtered:
             for n in i:
                 if n == 'goal':
                     goal_name = str(self._align_hash_to_task(i)['goal'])
@@ -310,12 +330,16 @@ class ToodleDoCLI():
         return out
 
 
-    def display_tasks_by_goal(self):
+    def display_tasks_by_goal(self, tag_filter=''):
         '''
         Presents a task in human readable format printed by goal
         '''
-        print 'Number of Tasks: {}'.format(self.json_tasks[0]['num'])
-        preprocess = self._group_by_goal()
+        preprocess = self._group_by_goal(tag_filter=tag_filter)
+        cnt = 0
+        for n in preprocess:
+            for i in preprocess[n]:
+                cnt += 1
+        print 'Number of Tasks: {}'.format(cnt)
         for n in preprocess:
             print '{} Related Work:'.format(n)
             for x in preprocess[n]:
@@ -355,6 +379,8 @@ def main():
     parser.add_argument('-m', '--max', type=int, dest='num', metavar='NUMBER '
                         'OF RECORDS', help='Set a maximum number of records to '
                         'display. Maximum allowed is 1000')
+    parser.add_argument('-T', '--tag-filter', type=str, metavar='TAG', 
+                        help='Case sensitive. Only show tasks with specified tag')
     parser.add_argument('-n', '--new-token', action='store_true',
         help='Authorize a new app and generate a new oauth_token')
     parser.add_argument('-r', '--refresh-token', action='store_true',
@@ -376,7 +402,10 @@ def main():
     try:
         a = toodle.sync_tasks(vars(args), args.fields)
         #toodle.dump_all_tasks()
-        toodle.display_tasks_by_goal()
+        if args.tag_filter:
+            toodle.display_tasks_by_goal(args.tag_filter)
+        else:
+            toodle.display_tasks_by_goal()
     except requests.exceptions.SSLError:
         # An SSL Error will occur if the token needs to refreshed. 
         # Well... refreshing resolves the issue. Not sure what's ACTUALLY bad.
